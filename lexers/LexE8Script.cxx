@@ -89,7 +89,6 @@ static void utf_lowercase(char *s)
 	}
 }
 
-
 static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
                            WordList *keywordlists[], Accessor &styler) {
 
@@ -101,7 +100,7 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 	styler.StartAt(startPos);
 
 	// Do not leak onto next line
-	if (initStyle == SCE_E8_STRINGEOL || initStyle == SCE_E8_COMMENT || initStyle == SCE_E8_PREPROCESSOR || initStyle == SCE_E8_DATE) {
+	if ( initStyle == SCE_E8_STRINGEOL ||  initStyle == SCE_E8_COMMENT || initStyle == SCE_E8_PREPROCESSOR || initStyle == SCE_E8_DATE) {
 		initStyle = SCE_E8_DEFAULT;
 	}
 
@@ -141,7 +140,7 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 					sc.ForwardSetState(SCE_E8_DEFAULT);
 				}
 			} else if (sc.atLineEnd) {
-				/* sc.ChangeState(SCE_E8_STRINGEOL); */
+				sc.ChangeState(SCE_E8_STRINGEOL);
 				sc.ForwardSetState(SCE_E8_DEFAULT);
 			}
 		} else if (sc.state == SCE_E8_COMMENT) {
@@ -160,7 +159,6 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 			}
 		} else if (sc.state == SCE_E8_DATE) {
 			if (sc.atLineEnd) {
-				sc.ChangeState(SCE_E8_STRINGEOL);
 				sc.ForwardSetState(SCE_E8_DEFAULT);
 			} else if (sc.ch == '\'') {
 				sc.ForwardSetState(SCE_E8_DEFAULT);
@@ -175,6 +173,8 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 				sc.SetState(SCE_E8_MULTYLINE_COMMENT);
 				sc.Forward();
 			} else if (sc.ch == '\"') {
+				sc.SetState(SCE_E8_STRING);
+			} else if (sc.ch == '|') {
 				sc.SetState(SCE_E8_STRING);
 			} else if (sc.ch == '\'') {
 				sc.SetState(SCE_E8_DATE);
