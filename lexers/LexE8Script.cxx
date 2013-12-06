@@ -100,7 +100,11 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 	styler.StartAt(startPos);
 
 	// Do not leak onto next line
-	if ( initStyle == SCE_E8_STRINGEOL ||  initStyle == SCE_E8_COMMENT || initStyle == SCE_E8_PREPROCESSOR || initStyle == SCE_E8_DATE) {
+	if ( initStyle == SCE_E8_STRINGEOL 
+		|| initStyle == SCE_E8_COMMENT 
+		|| initStyle == SCE_E8_DOC
+		|| initStyle == SCE_E8_PREPROCESSOR 
+		|| initStyle == SCE_E8_DATE) {
 		initStyle = SCE_E8_DEFAULT;
 	}
 
@@ -143,11 +147,11 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 				sc.ChangeState(SCE_E8_STRINGEOL);
 				sc.ForwardSetState(SCE_E8_DEFAULT);
 			}
-		} else if (sc.state == SCE_E8_COMMENT) {
+		} else if (sc.state == SCE_E8_COMMENT || sc.state == SCE_E8_DOC) {
 			if (sc.atLineEnd) {
 				sc.ForwardSetState(SCE_E8_DEFAULT);
 			}
-		} else if (sc.state == SCE_E8_MULTYLINE_COMMENT) {
+		} else if (sc.state == SCE_E8_MULTYLINE_COMMENT || sc.state == SCE_E8_MULTYLINE_DOC) {
 			if (sc.ch == '*' && sc.chNext == '/') {
 				sc.Forward();
 
@@ -167,11 +171,25 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 
 		if (sc.state == SCE_E8_DEFAULT) {
 			if (sc.ch == '/' && sc.chNext == '/') {
+				
 				sc.SetState(SCE_E8_COMMENT);
 				sc.Forward();
+				
+				if (sc.chNext == '!' || sc.chNext == '*') {
+					sc.ChangeState(SCE_E8_DOC);
+					sc.SetState(SCE_E8_DOC);
+				}
+					
 			} else if (sc.ch == '/' && sc.chNext == '*') {
+				
 				sc.SetState(SCE_E8_MULTYLINE_COMMENT);
 				sc.Forward();
+				
+				if (sc.chNext == '!' || sc.chNext == '/' || sc.chNext == '*') {
+					sc.ChangeState(SCE_E8_MULTYLINE_DOC);
+					sc.SetState(SCE_E8_MULTYLINE_DOC);
+				}
+					
 			} else if (sc.ch == '\"') {
 				sc.SetState(SCE_E8_STRING);
 			} else if (sc.ch == '|') {
