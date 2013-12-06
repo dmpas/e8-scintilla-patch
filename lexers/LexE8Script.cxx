@@ -38,7 +38,7 @@ static inline bool IsAWordChar(int ch) {
 
 	if (ch >= 0x400 && ch < 0x500)
 		return true;
-		
+
 	return ch >= 0x80 ||
 	       (isalnum(ch) || ch == '.' || ch == '_');
 }
@@ -79,7 +79,7 @@ static void utf_lowercase(char *s)
             cp = ((cp << 6) & 0x7ff) + ((*c) & 0x3f);
 			--c;
 			cp = bukvaLower(cp);
-			
+
 			*c = ((cp >> 6) & 0x1F) | 0xC0;
             ++c;
 
@@ -111,7 +111,7 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 			sc.SetState(SCE_E8_DEFAULT);
 		} else if (sc.state == SCE_E8_IDENTIFIER) {
 			if (!IsAWordChar(sc.ch)) {
-				char s[100];
+				char s[1000];
 				sc.GetCurrent(s, sizeof(s));
 				utf_lowercase(s);
 
@@ -124,7 +124,7 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 				} else if (keywords4.InList(s)) {
 					sc.ChangeState(SCE_E8_KEYWORD4);
 				}	// Else, it is really an identifier...
-				
+
 				sc.SetState(SCE_E8_DEFAULT);
 			}
 		} else if (sc.state == SCE_E8_NUMBER) {
@@ -150,7 +150,7 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 		} else if (sc.state == SCE_E8_MULTYLINE_COMMENT) {
 			if (sc.ch == '*' && sc.chNext == '/') {
 				sc.Forward();
-				
+
 				sc.ForwardSetState(SCE_E8_DEFAULT);
 			}
 		} else if (sc.state == SCE_E8_PREPROCESSOR) {
@@ -194,7 +194,7 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 	}
 
 	if (sc.state == SCE_E8_IDENTIFIER && !IsAWordChar(sc.ch)) {
-		char s[100];
+		char s[1000];
 		sc.GetCurrent(s, sizeof(s));
 		utf_lowercase(s);
 		if (keywords.InList(s)) {
