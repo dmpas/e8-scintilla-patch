@@ -175,7 +175,7 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 				sc.SetState(SCE_E8_COMMENT);
 				sc.Forward();
 				
-				if (sc.chNext == '!' || sc.chNext == '*') {
+				if (sc.chNext == '!' || sc.chNext == '*' || sc.chNext == '/') {
 					sc.ChangeState(SCE_E8_DOC);
 					sc.SetState(SCE_E8_DOC);
 				}
@@ -185,7 +185,7 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 				sc.SetState(SCE_E8_MULTYLINE_COMMENT);
 				sc.Forward();
 				
-				if (sc.chNext == '!' || sc.chNext == '/' || sc.chNext == '*') {
+				if (sc.chNext == '!' || sc.chNext == '*') {
 					sc.ChangeState(SCE_E8_MULTYLINE_DOC);
 					sc.SetState(SCE_E8_MULTYLINE_DOC);
 				}
