@@ -290,7 +290,11 @@ enum {
 
 
 static bool IsStreamCommentStyle(int style) {
-	return /*style == SCE_E8_COMMENT || */style == SCE_E8_MULTYLINE_COMMENT;
+	return style == SCE_E8_MULTYLINE_COMMENT;
+}
+
+static bool IsStreamDocStyle(int style) {
+	return style == SCE_E8_MULTYLINE_DOC;
 }
 
 static bool IsCommentLine(int line, Accessor &styler) {
@@ -302,7 +306,25 @@ static bool IsCommentLine(int line, Accessor &styler) {
 		char ch2 = styler.SafeGetCharAt(i + 2);
 		int style = styler.StyleAt(i);
 		if (ch == '/' && chNext == '/' && ch2 != '*' && ch2 != '/' && ch2 != '!' 
-			&& (style == SCE_E8_COMMENT/* || style == SCE_E8_MULTYLINE_COMMENT*/)) {
+			&& (style == SCE_E8_COMMENT)) {
+			return true;
+		} else if (!IsASpaceOrTab(ch)) {
+			return false;
+		}
+	}
+	return false;
+}
+static bool IsDocLine(int line, Accessor &styler)
+{
+	int pos = styler.LineStart(line);
+	int eolPos = styler.LineStart(line + 1) - 1;
+	for (int i = pos; i < eolPos; i++) {
+		char ch = styler[i];
+		char chNext = styler.SafeGetCharAt(i + 1);
+		char ch2 = styler.SafeGetCharAt(i + 2);
+		int style = styler.StyleAt(i);
+		if (ch == '/' && chNext == '/' && (ch2 == '*' || ch2 == '/' || ch2 == '!')
+			&& (style == SCE_E8_DOC)) {
 			return true;
 		} else if (!IsASpaceOrTab(ch)) {
 			return false;
@@ -317,7 +339,9 @@ static unsigned int SkipWhiteSpace(unsigned int currentPos, unsigned int endPos,
 	unsigned int j = currentPos + 1;
 	char ch = styler.SafeGetCharAt(j);
 	while ((j < endPos) && (IsASpaceOrTab(ch) || ch == '\r' || ch == '\n' ||
-		IsStreamCommentStyle(styler.StyleAt(j)) || (includeChars && setWord.Contains(ch)))) {
+		IsStreamCommentStyle(styler.StyleAt(j)) || (includeChars && setWord.Contains(ch)))
+		|| IsStreamDocStyle(styler.StyleAt(j))
+		) {
 		j++;
 		ch = styler.SafeGetCharAt(j);
 	}
@@ -442,6 +466,8 @@ static void FoldE8Doc(unsigned int startPos, int length, int initStyle,
 
 	int lastStart = 0;
 	
+	bool foldDoc = foldComment;
+	
 	for (unsigned int i = startPos; i < endPos; i++) {
 		char ch = chNext;
 		chNext = styler.SafeGetCharAt(i + 1);
@@ -465,6 +491,23 @@ static void FoldE8Doc(unsigned int startPos, int length, int initStyle,
 				levelCurrent++;
 			else if (IsCommentLine(lineCurrent - 1, styler)
 			         && !IsCommentLine(lineCurrent+1, styler))
+				levelCurrent--;
+		}
+		if (foldDoc && IsStreamDocStyle(style)) {
+			if (!IsStreamDocStyle(stylePrev)) {
+				levelCurrent++;
+			} else if (!IsStreamDocStyle(styleNext) && !atEOL) {
+				// Comments don't end at end of line and the next character may be unstyled.
+				levelCurrent--;
+			}
+		}
+		if (foldDoc && atEOL && IsDocLine(lineCurrent, styler))
+		{
+			if (!IsDocLine(lineCurrent - 1, styler)
+			    && IsDocLine(lineCurrent + 1, styler))
+				levelCurrent++;
+			else if (IsDocLine(lineCurrent - 1, styler)
+			         && !IsDocLine(lineCurrent+1, styler))
 				levelCurrent--;
 		}
 		if (!IsASpace(ch))
