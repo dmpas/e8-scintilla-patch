@@ -1,2 +1,5 @@
 /bin/*.a
 /gtk/*.o
+/win32/*.o
+/bin/*.dll
+/win32/Lexers.a
