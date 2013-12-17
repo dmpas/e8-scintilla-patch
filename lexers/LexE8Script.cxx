@@ -25,7 +25,7 @@
 using namespace Scintilla;
 #endif
 
-/*! Предельный размер идентификатора в байтах (количество символов *2) */
+/*! РџСЂРµРґРµР»СЊРЅС‹Р№ СЂР°Р·РјРµСЂ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР° РІ Р±Р°Р№С‚Р°С… (РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРёРјРІРѕР»РѕРІ *2) */
 #define E8_MAX_IDENTIFIER_SIZE_BYTES 1000
 
 static inline bool IsAWordChar(int ch) {
@@ -241,10 +241,11 @@ static void GetRangeLowered(unsigned int start,
 		unsigned int len) {
 	unsigned int i = 0;
 	while ((i < end - start + 1) && (i < len-1)) {
-		s[i] = static_cast<char>(tolower(styler[start + i]));
+		s[i] = static_cast<char>(styler[start + i]);
 		i++;
 	}
 	s[i] = '\0';
+	utf_lowercase(s);
 }
 
 static void GetForwardRangeLowered(unsigned int start,
@@ -348,97 +349,23 @@ static unsigned int SkipWhiteSpace(unsigned int currentPos, unsigned int endPos,
 	return j;
 }
 
-static void ClassifyPascalWordFoldPoint(int &levelCurrent, int &lineFoldStateCurrent,
+static void ClassifyE8WordFoldPoint(int &levelCurrent, int &lineFoldStateCurrent,
 		int startPos, unsigned int endPos,
 		unsigned int lastStart, unsigned int currentPos, Accessor &styler) {
 	char s[100];
 	GetRangeLowered(lastStart, currentPos, styler, s, sizeof(s));
 
-	if (strcmp(s, "record") == 0) {
-		lineFoldStateCurrent |= stateFoldInRecord;
+	if (strcmp(s, "procedure") == 0
+		|| strcmp(s, "function") == 0
+		|| strcmp(s, "РїСЂРѕС†РµРґСѓСЂР°") == 0
+		|| strcmp(s, "С„СѓРЅРєС†РёСЏ") == 0
+		) {
 		levelCurrent++;
-	} else if (strcmp(s, "begin") == 0 ||
-		strcmp(s, "asm") == 0 ||
-		strcmp(s, "try") == 0 ||
-		(strcmp(s, "case") == 0 && !(lineFoldStateCurrent & stateFoldInRecord))) {
-		levelCurrent++;
-	} else if (strcmp(s, "class") == 0 || strcmp(s, "object") == 0) {
-		// "class" & "object" keywords require special handling...
-		bool ignoreKeyword = false;
-		unsigned int j = SkipWhiteSpace(currentPos, endPos, styler);
-		if (j < endPos) {
-			CharacterSet setWordStart(CharacterSet::setAlpha, "_");
-			CharacterSet setWord(CharacterSet::setAlphaNum, "_");
-
-			if (styler.SafeGetCharAt(j) == ';') {
-				// Handle forward class declarations ("type TMyClass = class;")
-				// and object method declarations ("TNotifyEvent = procedure(Sender: TObject) of object;")
-				ignoreKeyword = true;
-			} else if (strcmp(s, "class") == 0) {
-				// "class" keyword has a few more special cases...
-				if (styler.SafeGetCharAt(j) == '(') {
-					// Handle simplified complete class declarations ("type TMyClass = class(TObject);")
-					j = SkipWhiteSpace(j, endPos, styler, true);
-					if (j < endPos && styler.SafeGetCharAt(j) == ')') {
-						j = SkipWhiteSpace(j, endPos, styler);
-						if (j < endPos && styler.SafeGetCharAt(j) == ';') {
-							ignoreKeyword = true;
-						}
-					}
-				} else if (setWordStart.Contains(styler.SafeGetCharAt(j))) {
-					char s2[11];	// Size of the longest possible keyword + one additional character + null
-					GetForwardRangeLowered(j, setWord, styler, s2, sizeof(s2));
-
-					if (strcmp(s2, "procedure") == 0 ||
-						strcmp(s2, "function") == 0 ||
-						strcmp(s2, "of") == 0 ||
-						strcmp(s2, "var") == 0 ||
-						strcmp(s2, "property") == 0 ||
-						strcmp(s2, "operator") == 0) {
-						ignoreKeyword = true;
-					}
-				}
-			}
-		}
-		if (!ignoreKeyword) {
-			levelCurrent++;
-		}
-	} else if (strcmp(s, "interface") == 0) {
-		// "interface" keyword requires special handling...
-		bool ignoreKeyword = true;
-		int j = lastStart - 1;
-		char ch = styler.SafeGetCharAt(j);
-		while ((j >= startPos) && (IsASpaceOrTab(ch) || ch == '\r' || ch == '\n' ||
-			IsStreamCommentStyle(styler.StyleAt(j)))) {
-			j--;
-			ch = styler.SafeGetCharAt(j);
-		}
-		if (j >= startPos && styler.SafeGetCharAt(j) == '=') {
-			ignoreKeyword = false;
-		}
-		if (!ignoreKeyword) {
-			unsigned int k = SkipWhiteSpace(currentPos, endPos, styler);
-			if (k < endPos && styler.SafeGetCharAt(k) == ';') {
-				// Handle forward interface declarations ("type IMyInterface = interface;")
-				ignoreKeyword = true;
-			}
-		}
-		if (!ignoreKeyword) {
-			levelCurrent++;
-		}
-	} else if (strcmp(s, "dispinterface") == 0) {
-		// "dispinterface" keyword requires special handling...
-		bool ignoreKeyword = false;
-		unsigned int j = SkipWhiteSpace(currentPos, endPos, styler);
-		if (j < endPos && styler.SafeGetCharAt(j) == ';') {
-			// Handle forward dispinterface declarations ("type IMyInterface = dispinterface;")
-			ignoreKeyword = true;
-		}
-		if (!ignoreKeyword) {
-			levelCurrent++;
-		}
-	} else if (strcmp(s, "end") == 0) {
-		lineFoldStateCurrent &= ~stateFoldInRecord;
+	} else if (strcmp(s, "endfunction") == 0
+		|| strcmp(s, "endprocedure") == 0
+		|| strcmp(s, "РєРѕРЅРµС†РїСЂРѕС†РµРґСѓСЂС‹") == 0
+		|| strcmp(s, "РєРѕРЅРµС†С„СѓРЅРєС†РёРё") == 0
+		) {
 		levelCurrent--;
 		if (levelCurrent < SC_FOLDLEVELBASE) {
 			levelCurrent = SC_FOLDLEVELBASE;
@@ -510,6 +437,19 @@ static void FoldE8Doc(unsigned int startPos, int length, int initStyle,
 			         && !IsDocLine(lineCurrent+1, styler))
 				levelCurrent--;
 		}
+		
+		if (stylePrev != SCE_E8_KEYWORD && style == SCE_E8_KEYWORD)
+		{
+			// Store last word start point.
+			lastStart = i;
+		}
+		if (stylePrev == SCE_E8_KEYWORD && !(lineFoldStateCurrent & stateFoldInPreprocessor)) {
+			//if(setWord.Contains(ch) && !setWord.Contains(chNext)) {
+			if (IsAWordChar(ch) && !IsAWordChar(chNext)) {
+				ClassifyE8WordFoldPoint(levelCurrent, lineFoldStateCurrent, startPos, endPos, lastStart, i, styler);
+			}
+		}
+		
 		if (!IsASpace(ch))
 			visibleChars++;
 
