@@ -38,10 +38,6 @@ static inline bool IsAWordChar(int ch) {
 }
 
 static inline bool IsAWordStart(int ch) {
-
-	if (ch >= 0x400 && ch < 0x500)
-		return true;
-
 	return ch >= 0x80 ||
 	       (isalpha(ch) || ch == '_');
 }
@@ -445,7 +441,8 @@ static void FoldE8Doc(unsigned int startPos, int length, int initStyle,
 		}
 		if (stylePrev == SCE_E8_KEYWORD && !(lineFoldStateCurrent & stateFoldInPreprocessor)) {
 			//if(setWord.Contains(ch) && !setWord.Contains(chNext)) {
-			if (IsAWordChar(ch) && !IsAWordChar(chNext)) {
+			//if (IsAWordChar(ch) && !IsAWordChar(chNext)) {
+			if (style == SCE_E8_KEYWORD && styleNext != SCE_E8_KEYWORD) {
 				ClassifyE8WordFoldPoint(levelCurrent, lineFoldStateCurrent, startPos, endPos, lastStart, i, styler);
 			}
 		}
