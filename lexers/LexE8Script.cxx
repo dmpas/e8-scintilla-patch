@@ -132,7 +132,25 @@ static void ColouriseE8Doc(unsigned int startPos, int length, int initStyle,
 				sc.SetState(SCE_E8_DEFAULT);
 			}
 		} else if (sc.state == SCE_E8_NUMBER) {
-			if (!IsANumberChar(sc.ch) && !(tolower(sc.ch) >= 'a' && tolower(sc.ch) <= 'f')) {
+			unsigned codepoint = code_point(sc.ch, sc.chNext);
+			if (!IsANumberChar(sc.ch) && !(tolower(sc.ch) >= 'a' && tolower(sc.ch) <= 'f')
+				&& !(sc.ch == 'x'
+				|| sc.ch == 0x448 /*ш*/
+				|| sc.ch == 0x430 /*а*/
+				|| sc.ch == 0x431 /*б*/
+				|| sc.ch == 0x446 /*ц*/
+				|| sc.ch == 0x434 /*д*/
+				|| sc.ch == 0x435 /*е*/
+				|| sc.ch == 0x444 /*ф*/
+				
+				|| sc.ch == 0x410 /*А*/		
+				|| sc.ch == 0x411 /*Б*/
+				|| sc.ch == 0x426 /*Ц*/
+				|| sc.ch == 0x414 /*Д*/
+				|| sc.ch == 0x415 /*Е*/
+				|| sc.ch == 0x424 /*Ф*/
+				)
+			) {
 				sc.SetState(SCE_E8_DEFAULT);
 			}
 		} else if (sc.state == SCE_E8_STRING) {
