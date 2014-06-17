@@ -31,12 +31,12 @@ RANLIB = ranlib
 endif
 endif
 
+# Use unified path
+COMPLIB=../bin/scintilla.a
 ifdef windir
 DEL = del /q
-COMPLIB=..\bin\scintilla.a
 else
 DEL = rm -f
-COMPLIB=../bin/scintilla.a
 endif
 
 vpath %.h ../src ../include ../lexlib
