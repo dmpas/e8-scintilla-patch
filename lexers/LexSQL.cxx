@@ -493,6 +493,10 @@ void SCI_METHOD LexerSQL::Lex(unsigned int startPos, int length, int initStyle, 
 				}
 			}
 			break;
+		case SCE_SQL_QUOTEDIDENTIFIER_MS:
+			if (sc.ch == ']')
+				sc.ForwardSetState(SCE_SQL_DEFAULT);
+
 		case SCE_SQL_COMMENT:
 			if (sc.Match('*', '/')) {
 				sc.Forward();
@@ -566,6 +570,8 @@ void SCI_METHOD LexerSQL::Lex(unsigned int startPos, int length, int initStyle, 
 				sc.SetState(SCE_SQL_IDENTIFIER);
 			} else if (sc.ch == 0x60 && options.sqlBackticksIdentifier) {
 				sc.SetState(SCE_SQL_QUOTEDIDENTIFIER);
+			} else if (sc.ch == '[') {
+				sc.SetState(SCE_SQL_QUOTEDIDENTIFIER_MS);
 			} else if (sc.Match('/', '*')) {
 				if (sc.Match("/**") || sc.Match("/*!")) {	// Support of Doxygen doc. style
 					sc.SetState(SCE_SQL_COMMENTDOC);
